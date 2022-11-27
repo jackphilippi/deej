@@ -20,6 +20,9 @@ func (d *Deej) initializeTray(onDone func()) {
 		editConfig := systray.AddMenuItem("Edit configuration", "Open config file with notepad")
 		editConfig.SetIcon(icon.EditConfig)
 
+		openGUI := systray.AddMenuItem("Open GUI", "Open graphical interface for changing settings")
+		openGUI.SetIcon(icon.EditConfig)
+
 		refreshSessions := systray.AddMenuItem("Re-scan audio sessions", "Manually refresh audio sessions if something's stuck")
 		refreshSessions.SetIcon(icon.RefreshSessions)
 
@@ -51,6 +54,11 @@ func (d *Deej) initializeTray(onDone func()) {
 					if err := util.OpenExternal(logger, editor, userConfigFilepath); err != nil {
 						logger.Warnw("Failed to open config file for editing", "error", err)
 					}
+
+				// edit config
+				case <-openGUI.ClickedCh:
+					logger.Info("Open GUI menu item clicked, opening GUI")
+					d.openGUIWindow()
 
 				// refresh sessions
 				case <-refreshSessions.ClickedCh:

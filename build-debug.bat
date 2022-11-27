@@ -1,0 +1,1 @@
+pkg\deej\scripts\windows\build-dev.bat && deej-debug.exe
