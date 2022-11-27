@@ -1,0 +1,7 @@
+# Generate icon array from .ico
+go run github.com/cratonica/2goarray Data icon < pkg/deej/assets/deej.ico > iconwin.go
+
+# Generate rsrc
+go run ~/go/pkg/mod/github.com/akavel/rsrc@v0.10.2/rsrc.go -manifest pkg/deej/assets/deej.manifest  -ico pkg/deej/assets/deej.ico -o pkg/deej/cmd/rsrc_windows.syso
+
+# And then build with build-all.bat

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -31,11 +30,6 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-// Linux returns true if we're running on Linux
-func Linux() bool {
-	return runtime.GOOS == "linux"
-}
-
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
 // program if it receives an interrupt from the OS
 func SetupCloseHandler() chan os.Signal {
@@ -55,11 +49,8 @@ func GetCurrentWindowProcessNames() ([]string, error) {
 // OpenExternal spawns a detached window with the provided command and argument
 func OpenExternal(logger *zap.SugaredLogger, cmd string, arg string) error {
 
-	// use cmd for windows, bash for linux
+	// use cmd for windows
 	execCommandArgs := []string{"cmd.exe", "/C", "start", "/b", cmd, arg}
-	if Linux() {
-		execCommandArgs = []string{"/bin/bash", "-c", fmt.Sprintf("%s %s", cmd, arg)}
-	}
 
 	command := exec.Command(execCommandArgs[0], execCommandArgs[1:]...)
 

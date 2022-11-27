@@ -78,9 +78,6 @@ func (sio *SerialIO) Start() error {
 	// this prevents a rare bug on windows where serial reads get congested,
 	// resulting in significant lag
 	minimumReadSize := 0
-	if util.Linux() {
-		minimumReadSize = 1
-	}
 
 	sio.connOptions = serial.OpenOptions{
 		PortName:        sio.deej.config.ConnectionInfo.COMPort,

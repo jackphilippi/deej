@@ -48,10 +48,6 @@ func (d *Deej) initializeTray(onDone func()) {
 					logger.Info("Edit config menu item clicked, opening config for editing")
 
 					editor := "notepad.exe"
-					if util.Linux() {
-						editor = "gedit"
-					}
-
 					if err := util.OpenExternal(logger, editor, userConfigFilepath); err != nil {
 						logger.Warnw("Failed to open config file for editing", "error", err)
 					}
