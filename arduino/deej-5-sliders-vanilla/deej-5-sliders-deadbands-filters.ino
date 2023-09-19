@@ -8,6 +8,7 @@ const int LOW_DEADBAND_THRESHOLD = 10;
 const int HIGH_DEADBAND_THRESHOLD = 1014;
 
 unsigned long lastSentTime = 0;
+
 const unsigned long SEND_INTERVAL = 10000; // 10 seconds in milliseconds
 
 void setup() { 

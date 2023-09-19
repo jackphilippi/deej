@@ -24,10 +24,11 @@ type SerialIO struct {
 	deej   *Deej
 	logger *zap.SugaredLogger
 
-	stopChannel chan bool
-	connected   bool
-	connOptions serial.OpenOptions
-	conn        io.ReadWriteCloser
+	stopChannel   chan bool
+	connected     bool
+	connOptions   serial.OpenOptions
+	conn          io.ReadWriteCloser
+	lastHeartbeat time.Time
 
 	lastKnownNumSliders        int
 	currentSliderPercentValues []float32
@@ -96,8 +97,11 @@ func (sio *SerialIO) Start() error {
 	sio.conn, err = serial.Open(sio.connOptions)
 	if err != nil {
 
-		// might need a user notification here, TBD
-		sio.logger.Warnw("Failed to open serial connection", "error", err)
+		// Notify the user that we've disconnected, and then die
+		sio.deej.notifier.Notify(fmt.Sprintf("Lost connection to %s!", sio.deej.config.ConnectionInfo.COMPort),
+			"This serial port is busy, make sure to close any serial monitor or other deej instance.")
+		sio.deej.signalStop()
+
 		return fmt.Errorf("open serial connection: %w", err)
 	}
 
@@ -117,6 +121,14 @@ func (sio *SerialIO) Start() error {
 				sio.close(namedLogger)
 			case line := <-lineChannel:
 				sio.handleLine(namedLogger, line)
+			default:
+				if !sio.lastHeartbeat.IsZero() && time.Since(sio.lastHeartbeat) > (60*time.Second) {
+					sio.close(namedLogger)
+					namedLogger.Debug("Haven't heard a heartbeat in 60 seconds")
+					sio.Start()
+					// TODO: Handle errors and do this recursively until we get a connection again :)
+					return
+				}
 			}
 		}
 	}()
@@ -224,6 +236,7 @@ func (sio *SerialIO) readLine(logger *zap.SugaredLogger, reader *bufio.Reader) c
 }
 
 func (sio *SerialIO) handleLine(logger *zap.SugaredLogger, line string) {
+	logger.Debugw("Line:", "line", line)
 
 	// this function receives an unsanitized line which is guaranteed to end with LF,
 	// but most lines will end with CRLF. it may also have garbage instead of
@@ -231,6 +244,10 @@ func (sio *SerialIO) handleLine(logger *zap.SugaredLogger, line string) {
 	if !expectedLinePattern.MatchString(line) {
 		return
 	}
+
+	// record that we received a heartbeat.
+	// we should realistically be receiving signals every 10 seconds or so
+	sio.lastHeartbeat = time.Now()
 
 	// trim the suffix
 	line = strings.TrimSuffix(line, "\r\n")
